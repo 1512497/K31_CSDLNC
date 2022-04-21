@@ -1,0 +1,20 @@
+a {
+    color: #222222;
+    text-decoration: none;
+}
+
+.searchResult {
+    max-width: 800px;
+    margin: 32px auto 68px;
+}
+
+.searchResult__wrapper {
+    border: 1px solid #00695c;
+    border-radius: 4px;
+    padding: 0 24px 8px;
+    margin-bottom: 12px;
+}
+
+.searchResult__wrapper:hover {
+    background-color: #e4e4e4;
+}

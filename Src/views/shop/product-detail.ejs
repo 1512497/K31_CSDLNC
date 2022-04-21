@@ -1,0 +1,63 @@
+
+        <%- include('../includes/head.ejs') %>
+    <link rel="stylesheet" href="/css/product.css">
+    <link rel="stylesheet" href="/css/forms.css">
+    </head>
+
+    <body>
+        <%- include('../includes/navigation.ejs') %>
+        <main class="centered">
+            <h1><%= product.title %></h1>
+            <hr>
+            <div class="image">
+                <img src="/<%= product.imageUrl %>" alt="<%= product.title %>">
+            </div>
+            <p>Rating: <%= product.rating %></p>
+            <h2>$<%= product.price - product.discount %></h2>
+            <% if (product.discount !== '0') { %>
+            <p><%= product.price %> - <%= product.discount %></p>
+            <% } %>
+            <% if (product.brand || product.color) { %>
+            <div class="fx-justify-between product-detail__description">
+                <% if (product.brand) { %>
+                <p>Brand: <%= product.brand %></p>
+                <% } %>
+                <% if (product.color) { %>
+                <p>Color: <%= product.color %></p>
+                <% } %>
+            </div>
+            <% } %>
+            <p class="product-detail__description"><%= product.description %></p>
+            <% if (isAuthenticated) { %>
+            <%- include('../includes/add-to-cart.ejs', { product: product }) %>
+            <% } %>
+        </main>
+
+        <section class="review">
+            <h2>Reviews</h2>
+            <% if (haveBought) { %>
+                <button id="review-btn" class="btn" style="margin-bottom: 32px">Write Review</button>
+            <% } %>
+            <div id="review-form" style="display: none; margin-bottom: 15px;">
+                <form action="/review" method="post">
+                    <div class="form-control">
+                        <label>Review
+                            <textarea name="content" id="review-content" rows="5"></textarea>
+                        </label>
+                    </div>
+                    <div>
+                        <input id ="rf" type="hidden" name="_csrf" value="<%= csrfToken %>" />
+                        <input type="hidden" value="<%= product._id %>" name="productId">
+                        <input type="hidden" value="" id="contentBody"/>
+                        <button type="submit" class="btn">Review</button>
+                    </div>
+                </form>
+            </div>
+            <div class="review__container"></div>
+            <div class="review__writeReview"></div>
+            
+        </section>
+
+        <script src="/js/review.js"></script>
+        <%- include('../includes/end.ejs') %>
+
