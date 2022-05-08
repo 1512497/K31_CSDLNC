@@ -47,11 +47,12 @@ mysql2Mongo.connectAsync = async function() {
 	return conn;
 }
 
-mysql2Mongo.model = function(tableName, modelConv, rowID = null, search = null) {
+mysql2Mongo.queryData = function(moduleInstance, rowID = null, search = null) {
+	var tableName = moduleInstance._tableName;
+
 	var instance = { };
-	
-	instance._modelConv = modelConv;
 	instance._mysql2Mongo = this;
+	instance._moduleInstance = moduleInstance;
 	instance._selectedRowID = rowID;
 	instance._advSearch = search;
 	instance._tableName = tableName;
@@ -157,11 +158,7 @@ mysql2Mongo.model = function(tableName, modelConv, rowID = null, search = null) 
 			var r = await this._mysql2Mongo.queryAsync(conn, sql);
 			var rows = r[1];
 			result = this._defaultMapping(rows);
-
-			var conv = this._modelConv;
-			if (conv != null) {
-				result = conv(result);
-			}
+			result = this._moduleInstance._convModel(result);
 			conn.end();
 		}
 		return result;
@@ -169,5 +166,55 @@ mysql2Mongo.model = function(tableName, modelConv, rowID = null, search = null) 
 
 	return instance;
 };
+
+mysql2Mongo.model = function(name, schema) {
+	var moduleInstance = {};
+	
+	moduleInstance._mysql2Mongo = this;
+	moduleInstance._tableName = name.toLowerCase();
+	moduleInstance._schema = schema;
+	
+	moduleInstance[name] = function(data) {
+		console.log(data);
+		return null;
+	};
+	
+	moduleInstance._convModel = function(rows) {
+		var schema = this._schema.obj;
+		var schemaKeys = Object.keys(schema);
+		var n2 = schemaKeys.length;
+		
+		var n = rows.length;
+		for (var i = 0; i < n; ++i) {
+			var row = rows[i];
+			for (var j = 0; j < n2; ++j) {
+				var key = schemaKeys[j];
+				if (key in row) {
+					continue;
+				}
+				row[key] = schema[key].type();
+			}
+			//
+		}
+		return rows;
+	};
+	
+	moduleInstance.find = function(search = null) {
+		var result = this._mysql2Mongo.queryData(this, null, search);
+		if (search != null) {
+			result = result.skip(null).limit(null);
+		}
+		return result;
+	};
+	
+	moduleInstance.findById = async function(id) {
+		var r = this._mysql2Mongo.queryData(this, id, null);
+		var rows = await r.skip(0).limit(1);
+		var result = rows[0];
+		return result;
+	};
+	
+	return moduleInstance;
+}
 
 module.exports = mysql2Mongo;

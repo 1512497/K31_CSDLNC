@@ -21,34 +21,5 @@ const productSchema = new Schema({
 
 //module.exports = mongoose.model('Product', productSchema);
 
-const tableName = "product";
-const product = {};
-
-product._mysql2Mongo = require('../lib/mysql2mongo');
-
-product.convModel = function(rows) {
-	var result = rows;
-	var n = rows.length;
-	for (var i = 0; i < n; ++i) {
-		var row = rows[i];
-		row.review = [];
-	}
-	return result;
-};
-
-product.find = function(search = null) {
-	var result = this._mysql2Mongo.model(tableName, this.convModel, null, search);
-	if (search != null) {
-		result = result.skip(null).limit(null);
-	}
-	return result;
-};
-
-product.findById = async function(id) {
-	var r = this._mysql2Mongo.model(tableName, this.convModel, id, null);
-	var rows = await r.skip(0).limit(1);
-	var result = rows[0];
-	return result;
-};
-
-module.exports = product;
+const mysql2mongo = require('../lib/mysql2mongo');
+module.exports = mysql2mongo.model('Product', productSchema);
