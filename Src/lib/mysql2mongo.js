@@ -232,6 +232,19 @@ mysql2Mongo.updateRecordData = async function(tableName, id, data) {
 	return r;
 };
 
+mysql2Mongo.deleteRecord = async function(tableName, id) {
+	var sql = "delete from ";
+	sql += tableName;
+	sql += " where id = ";
+	sql += mysql.escape(id);
+	
+	var conn = await this.connectAsync();
+	var r = await this.queryAsync(conn, sql);
+	conn.end();
+	
+	return r;
+};
+
 mysql2Mongo.model = function(name, schema) {
 	var moduleInstance = {};
 	
@@ -278,8 +291,13 @@ mysql2Mongo.model = function(name, schema) {
 		return result;
 	};
 	
-	moduleInstance.updateOne = async function (obj, data) {
+	moduleInstance.updateOne = async function(obj, data) {
 		var r = await this._mysql2Mongo.updateRecordData(this._tableName, obj._id, data);
+		return r;
+	};
+	
+	moduleInstance.deleteOne = async function(data) {
+		var r = await this._mysql2Mongo.deleteRecord(this._tableName, data._id);
 		return r;
 	};
 	
