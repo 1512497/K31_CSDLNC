@@ -204,7 +204,7 @@ exports.getProduct = async (req, res, next) => {
         const productId = req.params.productId;
         const product = await Product.findById(productId);
         let haveBought = false;
-        if (req.user) {
+        if (req.user && false) {
             const orders = await Order.find({ 'user.userId': req.user._id });
             orders.forEach(({ products }) => {
                 if (products.find(({ product }) => product._id.toString() === productId))
