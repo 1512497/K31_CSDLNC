@@ -72,7 +72,8 @@ exports.postAddProduct = async (req, res, next) => {
             validationErrors: !errors.isEmpty() ? errors.array() : [],
         });
     }
-    const product = new Product({
+	
+	const product = Product.createInstance({
         title,
         brand,
         color,
@@ -81,43 +82,48 @@ exports.postAddProduct = async (req, res, next) => {
         imageUrl: image.path.replace('\\', '/'),
         rating,
         description,
-        userId: req.user,
+        userId: req.user._id,
     });
+	
 
     try {
-        let session = driver.session({
-            database: 'tiki',
-            defaultAccessMode: neo4j.session.WRITE,
-        });
-        const p4j = await session.run('MATCH (n:Products) RETURN n');
-        session.close();
+		await product.save();
+		
+		if (false) {
+			let session = driver.session({
+				database: 'tiki',
+				defaultAccessMode: neo4j.session.WRITE,
+			});
+			const p4j = await session.run('MATCH (n:Products) RETURN n');
+			session.close();
 
-        if (p4j.records.length == 0) {
-            await postAllProductToN4J();
-        }
+			if (p4j.records.length == 0) {
+				await postAllProductToN4J();
+			}
 
-        await product.save(async (err, newProduct) => {
-            const data = {
-                productID: String(newProduct._id),
-                userID: String(newProduct.userId),
-                titleParam: newProduct.title,
-                ratingParam: newProduct.rating,
-                priceParam: newProduct.price,
-                discountParam: newProduct.discount,
-                descriptionParam: newProduct.description,
-                brandParam: newProduct.brand,
-            };
-            const session = driver.session({
-                database: 'tiki',
-                defaultAccessMode: neo4j.session.WRITE,
-            });
-            await session.run(
-                'MERGE(c:Products {productID:$productID,userID:$userID,name:$titleParam, rating:$ratingParam, price:$priceParam, discount:$discountParam, description: $descriptionParam,brand:$brandParam}) MERGE(b:Brands {name:$brandParam}) MERGE (c)-[:PRODUCED_BY]->(b)',
-                data
-            );
-            session.close();
-        });
-        await syncBrand();
+			await product.save(async (err, newProduct) => {
+				const data = {
+					productID: String(newProduct._id),
+					userID: String(newProduct.userId),
+					titleParam: newProduct.title,
+					ratingParam: newProduct.rating,
+					priceParam: newProduct.price,
+					discountParam: newProduct.discount,
+					descriptionParam: newProduct.description,
+					brandParam: newProduct.brand,
+				};
+				const session = driver.session({
+					database: 'tiki',
+					defaultAccessMode: neo4j.session.WRITE,
+				});
+				await session.run(
+					'MERGE(c:Products {productID:$productID,userID:$userID,name:$titleParam, rating:$ratingParam, price:$priceParam, discount:$discountParam, description: $descriptionParam,brand:$brandParam}) MERGE(b:Brands {name:$brandParam}) MERGE (c)-[:PRODUCED_BY]->(b)',
+					data
+				);
+				session.close();
+			});
+			await syncBrand();
+		}
         res.redirect('/admin/products');
     } catch (err) {
         const error = new Error(err);
