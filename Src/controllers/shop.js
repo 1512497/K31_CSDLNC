@@ -6,7 +6,7 @@ const Order = require('../models/order');
 const User = require('../models/user');
 const neo4j = require('neo4j-driver');
 const driver = neo4j.driver('neo4j://localhost', neo4j.auth.basic('neo4j', 'admin'));
-const ITEMS_PER_PAGE = 2;
+const ITEMS_PER_PAGE = 4;
 
 const postAllOrderToN4J = async () => {
     const orderMongo = await Order.find({});
