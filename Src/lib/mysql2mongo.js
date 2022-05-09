@@ -178,7 +178,7 @@ mysql2Mongo.queryData = function(moduleInstance, rowID = null, search = null) {
 	return instance;
 };
 
-mysql2Mongo.saveData = async function(tableName, data) {
+mysql2Mongo.insertNewRecord = async function(tableName, data) {
 	var keys = Object.keys(data);
 	var n = keys.length;
 
@@ -199,6 +199,31 @@ mysql2Mongo.saveData = async function(tableName, data) {
 		sql += mysql.escape(data[keys[i]]);
 	}
 	sql += ")";
+	
+	var conn = await this.connectAsync();
+	var r = await this.queryAsync(conn, sql);
+	conn.end();
+	
+	return r;
+};
+
+mysql2Mongo.updateRecordData = async function(tableName, id, data) {
+	var keys = Object.keys(data);
+	var n = keys.length;
+
+	var sql = "update ";
+	sql += tableName;
+	sql += " set ";
+	for (var i = 0; i < n; ++i) {
+		if (i > 0) {
+			sql += ", ";
+		}
+		sql += keys[i];
+		sql += ' = ';
+		sql += mysql.escape(data[keys[i]]);
+	}
+	sql += " where id = ";
+	sql += mysql.escape(id);
 	
 	var conn = await this.connectAsync();
 	var r = await this.queryAsync(conn, sql);
@@ -253,6 +278,11 @@ mysql2Mongo.model = function(name, schema) {
 		return result;
 	};
 	
+	moduleInstance.updateOne = async function (obj, data) {
+		var r = await this._mysql2Mongo.updateRecordData(this._tableName, obj._id, data);
+		return r;
+	};
+	
 	moduleInstance.createInstance = function(data) {
 		var instance = {};
 		
@@ -269,7 +299,7 @@ mysql2Mongo.model = function(name, schema) {
 		instance.save = async function() {
 			var moduleInstance = this._moduleInstance;
 			var tableName = moduleInstance._tableName;
-			var r = await moduleInstance._mysql2Mongo.saveData(tableName, this._data);
+			var r = await moduleInstance._mysql2Mongo.insertNewRecord(tableName, this._data);
 			//var insertedID = r[1].insertId;
 		};
 		

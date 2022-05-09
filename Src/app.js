@@ -1,3 +1,5 @@
+const mysql2mongo = require('./lib/mysql2mongo');
+
 const express = require('express');
 const multer = require('multer');
 const session = require('express-session');
@@ -18,10 +20,16 @@ const User = require('./models/user');
 
 const app = express();
 const csrfProtection = csrf();
-const store = new MongoDbStore({
-    uri: MONGODB_URI,
-    collection: 'sessions',
-});
+
+function NewMongoDbStore() {
+	return new MongoDbStore({
+		uri: MONGODB_URI,
+		collection: 'sessions',
+	});
+};
+
+const store = null;
+
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, 'images');
@@ -30,6 +38,7 @@ const storage = multer.diskStorage({
         cb(null, uuidv4() + '.' + file.mimetype.split('/')[1]);
     },
 });
+
 const fileFilter = (req, file, cb) => {
     if (
         file.mimetype === 'image/jpeg' ||
@@ -58,7 +67,13 @@ app.use((req, res, next) => {
 app.use(async (req, res, next) => {
     try {
         if (req.session.user) {
-            const user = await User.findById(req.session.user._id);
+            var user = null;
+            //user = await User.findById(req.session.user._id);
+            user = {
+				_id: 1,
+				name: "johndoe",
+				email: "johndoe@mailer.ru"
+			};
             if (user) {
                 req.user = user;
             }
@@ -86,15 +101,22 @@ app.use((error, req, res, next) => {
     });
 });
 
-mongoose
-    .connect(MONGODB_URI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        useFindAndModify: false,
-    })
-    .then(() => {
-        app.listen(3000);
-    })
-    .catch((err) => {
-        console.log(err);
-    });
+function InitMongoose() {
+	mongoose
+		.connect(MONGODB_URI, {
+			useNewUrlParser: true,
+			useUnifiedTopology: true,
+			useFindAndModify: false,
+		})
+		.then(() => {
+			app.listen(3000);
+		})
+		.catch((err) => {
+			console.log(err);
+		});
+};
+
+mysql2mongo.setup('localhost', 'caohoc_advdb', 'caohoc_advdb', '1');
+
+app.listen(8001);
+
