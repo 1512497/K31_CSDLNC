@@ -83,10 +83,20 @@ mysql2Mongo.queryData = function(moduleInstance, rowID = null, search = null) {
 				if (sql.length > 0) {
 					sql += " and ";
 				}
+				
 				sql += key;
-				sql += " REGEXP \'";
-				sql += advSearch[key]["$regex"].source;
-				sql += "\'";
+
+				var value = advSearch[key];
+				if (value.hasOwnProperty("$regex")) {
+					sql += " REGEXP \'";
+					sql += mysql.escape(value["$regex"].source);
+					sql += "\'";
+				}
+				else {
+					sql += " = \'";
+					sql += mysql.escape(value);
+					sql += "\'";
+				}
 			}
 			
 		}
@@ -94,6 +104,8 @@ mysql2Mongo.queryData = function(moduleInstance, rowID = null, search = null) {
 		if (rowID != null || advSearch != null) {
 			sql = " where " + sql;
 		}
+		
+		console.log(sql);
 		return sql;
 	};
 	
@@ -167,6 +179,11 @@ mysql2Mongo.queryData = function(moduleInstance, rowID = null, search = null) {
 	return instance;
 };
 
+mysql2Mongo.saveData = async function(tableName, data) {
+	console.log(this);
+	console.log(data);
+};
+
 mysql2Mongo.model = function(name, schema) {
 	var moduleInstance = {};
 	
@@ -212,6 +229,28 @@ mysql2Mongo.model = function(name, schema) {
 		var rows = await r.skip(0).limit(1);
 		var result = rows[0];
 		return result;
+	};
+	
+	moduleInstance.createInstance = function(data) {
+		var instance = {};
+		
+		var keys = Object.keys(data);
+		var n = keys.length;
+		for (var i = 0; i < n; ++i) {
+			var key = keys[i];
+			instance[key] = data[key];
+		}
+		
+		instance._moduleInstance = this;
+		instance._data = data;
+		
+		instance.save = async function() {
+			var moduleInstance = this._moduleInstance;
+			var tableName = moduleInstance._tableName;
+			await moduleInstance._mysql2Mongo.saveData(tableName, this._data);
+		};
+		
+		return instance;
 	};
 	
 	return moduleInstance;
