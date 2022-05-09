@@ -191,6 +191,7 @@ mysql2Mongo.insertNewRecord = async function(tableName, data) {
 		}
 		sql += keys[i];
 	}
+	sql += ", timestamp";
 	sql += ") values (";
 	for (var i = 0; i < n; ++i) {
 		if (i > 0) {
@@ -198,7 +199,11 @@ mysql2Mongo.insertNewRecord = async function(tableName, data) {
 		}
 		sql += mysql.escape(data[keys[i]]);
 	}
+	sql += ", ";
+	sql += (Math.floor(Date.now() / 1000));
 	sql += ")";
+	
+	//console.log(sql);
 	
 	var conn = await this.connectAsync();
 	var r = await this.queryAsync(conn, sql);
