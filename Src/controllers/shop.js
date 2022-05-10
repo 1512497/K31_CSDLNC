@@ -206,7 +206,7 @@ async function loadProductReview(product) {
 	
 	var totalRating = 0;
 	var nRating = 0;
-	var comments = [];
+	var review = [];
 	
 	var n = records.length;
 	for (var i = 0; i < n; ++i) {
@@ -220,7 +220,7 @@ async function loadProductReview(product) {
 			++nRating;
 		}
 		
-		comments.push(prop.comment);
+		review.push(prop.comment);
 	}
 	
 	if (nRating > 0) {
@@ -230,7 +230,7 @@ async function loadProductReview(product) {
 		product.rating = 0;
 	}
 
-	product.review = comments;
+	product.review = review;
 }
 
 exports.getProduct = async (req, res, next) => {
