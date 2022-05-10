@@ -16,7 +16,7 @@ productReviews.getAll = async function(productId) {
 		var cypher = "";
 		cypher += "match (n)-[r:child*]-(m) where id(n) = ";
 		cypher += "$productId";
-		cypher += " return m.comment";
+		cypher += " return m";
 		
 		var r = await session.run(
 			cypher,
