@@ -203,7 +203,34 @@ exports.postReply = async (req, res, next) => {
 
 async function loadProductReview(product) {
 	var records = await ProductReviews.getAll(product.graphDbReviewId);
-	console.log(records);
+	
+	var totalRating = 0;
+	var nRating = 0;
+	var comments = [];
+	
+	var n = records.length;
+	for (var i = 0; i < n; ++i) {
+		var record = records[i];
+		var node = record.get(0);
+		var prop = node.properties;
+		
+		var key = "rating";
+		if (key in prop) {
+			totalRating += parseInt(prop[key]);
+			++nRating;
+		}
+		
+		comments.push(prop.comment);
+	}
+	
+	if (nRating > 0) {
+		product.rating = parseInt(totalRating / nRating);
+	}
+	else {
+		product.rating = 0;
+	}
+
+	product.review = comments;
 }
 
 exports.getProduct = async (req, res, next) => {
