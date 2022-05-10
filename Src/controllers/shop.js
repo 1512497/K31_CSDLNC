@@ -2,10 +2,12 @@ const fs = require('fs');
 const PDFDocument = require('pdfkit');
 const path = require('path');
 const Product = require('../models/product');
+const ProductReviews = require('../lib/productreviews');
 const Order = require('../models/order');
 const User = require('../models/user');
 const neo4j = require('neo4j-driver');
 const driver = neo4j.driver('neo4j://localhost', neo4j.auth.basic('neo4j', 'admin'));
+
 const ITEMS_PER_PAGE = 4;
 
 const postAllOrderToN4J = async () => {
@@ -199,6 +201,11 @@ exports.postReply = async (req, res, next) => {
     }
 };
 
+async function loadProductReview(product) {
+	var records = await ProductReviews.getAll(product.graphDbReviewId);
+	console.log(records);
+}
+
 exports.getProduct = async (req, res, next) => {
     try {
         const productId = req.params.productId;
@@ -211,6 +218,9 @@ exports.getProduct = async (req, res, next) => {
                     haveBought = true;
             });
         }
+
+        await loadProductReview(product);
+
         res.render('shop/product-detail', {
             product,
             pageTitle: product.title,

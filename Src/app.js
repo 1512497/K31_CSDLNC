@@ -1,4 +1,5 @@
 const mysql2mongo = require('./lib/mysql2mongo');
+const productReviews = require('./lib/productreviews');
 
 const express = require('express');
 const multer = require('multer');
@@ -117,6 +118,7 @@ function InitMongoose() {
 };
 
 mysql2mongo.setup('localhost', 'caohoc_advdb', 'caohoc_advdb', '1');
+productReviews.setup('bolt://localhost:7687', 'product-reviews', 'neo4j', '1');
 
 app.listen(8001);
 

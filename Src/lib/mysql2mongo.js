@@ -60,7 +60,7 @@ mysql2Mongo.queryData = function(moduleInstance, rowID = null, search = null) {
 
 	Object.defineProperty(instance, "length", {
 		get: function() {
-			console.log('length', this._rowsCount);
+			//console.log('length', this._rowsCount);
 			return this._rowsCount;
 		}
 	});
