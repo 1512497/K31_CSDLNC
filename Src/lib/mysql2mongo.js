@@ -88,14 +88,14 @@ mysql2Mongo.queryData = function(moduleInstance, rowID = null, search = null) {
 
 				var value = advSearch[key];
 				if (value.hasOwnProperty("$regex")) {
-					sql += " REGEXP \'";
+					sql += " REGEXP ";
 					sql += mysql.escape(value["$regex"].source);
-					sql += "\'";
+					sql += "";
 				}
 				else {
-					sql += " = \'";
+					sql += " = ";
 					sql += mysql.escape(value);
-					sql += "\'";
+					sql += "";
 				}
 			}
 			
@@ -165,6 +165,8 @@ mysql2Mongo.queryData = function(moduleInstance, rowID = null, search = null) {
 				sql += ", ";
 				sql += n;
 			}
+			
+			//console.log(sql);
 			
 			var r = await this._mysql2Mongo.queryAsync(conn, sql);
 			var rows = r[1];
@@ -281,7 +283,7 @@ mysql2Mongo.model = function(name, schema) {
 		return rows;
 	};
 	
-	moduleInstance.find = function(search = null) {
+	moduleInstance.find = function(search = null, desc = null) {
 		var result = this._mysql2Mongo.queryData(this, null, search);
 		if (search != null) {
 			result = result.skip(null).limit(null);
