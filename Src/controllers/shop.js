@@ -113,24 +113,40 @@ exports.getTopProducts = async (req, res, next) => {
 
 exports.getRecommendProducts = async (req, res, next) => {
     try {
-        const session = driver.session({
-            database: dbneo4j,
-            defaultAccessMode: neo4j.session.WRITE,
-        });
-        const orderMongo = await Order.find({});
-        const person = await User.findOne({ _id: req.user._id });
+		const session = driver.session({
+			database: dbneo4j,
+			defaultAccessMode: neo4j.session.WRITE,
+		});
 
-        const recommendProducts = await session.run(
-            'MATCH (b:Brands)  MATCH (n:Person{email:$emailParam})-[:BUY]->(p:Products)   MATCH (p)-[:PRODUCED_BY]->(b) MATCH (r:Products)-[:PRODUCED_BY]->(b) RETURN r LIMIT 20',
+		if (false) {
+			const orderMongo = await Order.find({});
+			const person = await User.findOne({ _id: req.user._id });
+		}
+		
+		var recommendProducts = null;
+		if (false) {
+			recommendProducts = await session.run(
+				'MATCH (b:Brands)  MATCH (n:Person{email:$emailParam})-[:BUY]->(p:Products)   MATCH (p)-[:PRODUCED_BY]->(b) MATCH (r:Products)-[:PRODUCED_BY]->(b) RETURN r LIMIT 20',
+				{
+					emailParam: person.email,
+				}
+			);
+		}
+		
+        recommendProducts = await session.run(
+            'MATCH (b:Brands) MATCH (n:Person{userID:$userIdParam})-[:BUY]->(p:Products)   MATCH (p)-[:PRODUCED_BY]->(b) MATCH (r:Products)-[:PRODUCED_BY]->(b) RETURN r LIMIT 20',
             {
-                emailParam: person.email,
+                userIdParam: '1',
             }
         );
+
         session.close();
+		
         const productArr = recommendProducts.records.map((item) => {
             const product = item._fields[0].properties;
             return product;
         });
+
         res.render('shop/recommend-products', {
             products: productArr,
             pageTitle: 'Recommend Products',
