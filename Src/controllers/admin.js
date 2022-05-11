@@ -2,16 +2,20 @@ const { validationResult } = require('express-validator');
 const Product = require('../models/product');
 const fileHelper = require('../util/file');
 const neo4j = require('neo4j-driver');
-const driver = neo4j.driver('neo4j://localhost', neo4j.auth.basic('neo4j', 'admin'));
+const driver = neo4j.driver('bolt://localhost:7687', neo4j.auth.basic('neo4j', '1'));
+const dbneo4j = 'top-product';
 
 const postAllProductToN4J = async () => {
     const productMongo = await Product.find({});
     productMongo.forEach(async (product) => {
         const session = driver.session({
-            database: 'tiki',
+            database: dbneo4j,
             defaultAccessMode: neo4j.session.WRITE,
         });
-        await session.run(
+		await session.run(
+			'MATCH(n:Brands) DELETE n'
+		);
+		await session.run(
             'MERGE(c:Products {productID:$productID,userID:$userID,name:$titleParam, rating:$ratingParam, price:$priceParam, discount:$discountParam, description: $descriptionParam,brand:$brandParam}) MERGE(b:Brands {name:$brandParam}) MERGE (c)-[:PRODUCED_BY]->(b)',
             {
                 productID: String(product._id),
@@ -28,15 +32,19 @@ const postAllProductToN4J = async () => {
     });
 };
 
-const syncBrand = async () => {
+const syncBrand1 = async () => {
     const session = driver.session({
-        database: 'tiki',
+        database: dbneo4j,
         defaultAccessMode: neo4j.session.WRITE,
     });
     await session.run(
         'MATCH (n:Brands) WITH n.name AS name, COLLECT(n) AS nodelist, COUNT(*) AS count WHERE count > 1 CALL apoc.refactor.mergeNodes(nodelist) YIELD node RETURN node'
     );
     session.close();
+};
+
+const syncBrand = async () => {
+	//console.log(syncBrand);
 };
 
 exports.getAddProduct = (req, res, next) => {
@@ -91,7 +99,7 @@ exports.postAddProduct = async (req, res, next) => {
 		
 		if (false) {
 			let session = driver.session({
-				database: 'tiki',
+				database: dbneo4j,
 				defaultAccessMode: neo4j.session.WRITE,
 			});
 			const p4j = await session.run('MATCH (n:Products) RETURN n');
@@ -113,7 +121,7 @@ exports.postAddProduct = async (req, res, next) => {
 					brandParam: newProduct.brand,
 				};
 				const session = driver.session({
-					database: 'tiki',
+					database: dbneo4j,
 					defaultAccessMode: neo4j.session.WRITE,
 				});
 				await session.run(

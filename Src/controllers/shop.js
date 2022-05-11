@@ -6,7 +6,8 @@ const ProductReviews = require('../lib/productreviews');
 const Order = require('../models/order');
 const User = require('../models/user');
 const neo4j = require('neo4j-driver');
-const driver = neo4j.driver('neo4j://localhost', neo4j.auth.basic('neo4j', 'admin'));
+const driver = neo4j.driver('bolt://localhost:7687', neo4j.auth.basic('neo4j', '1'));
+const dbneo4j = 'top-product';
 
 const ITEMS_PER_PAGE = 4;
 
@@ -15,10 +16,13 @@ const postAllOrderToN4J = async () => {
     orderMongo.forEach(async (order) => {
         order.products.forEach(async (product) => {
             const session = driver.session({
-                database: 'tiki',
+                database: dbneo4j,
                 defaultAccessMode: neo4j.session.WRITE,
             });
-            await session.run(
+		await session.run(
+			'MATCH(n:Products) DELETE n'
+		);
+		await session.run(
                 'MATCH(n:Products {productID:$productID}) MERGE (p:Person{userID:$userID,email:$emailParam})-[:BUY]->(n)',
                 {
                     orderID: String(order._id),
@@ -37,7 +41,7 @@ const postAllOrderToN4J = async () => {
 
 const syncUser = async () => {
     const session = driver.session({
-        database: 'tiki',
+        database: dbneo4j,
         defaultAccessMode: neo4j.session.WRITE,
     });
     await session.run(
@@ -70,7 +74,7 @@ exports.getProducts = async (req, res, next) => {
 exports.getTopProducts = async (req, res, next) => {
     try {
         const session = driver.session({
-            database: 'tiki',
+            database: dbneo4j,
             defaultAccessMode: neo4j.session.WRITE,
         });
         session
@@ -108,7 +112,7 @@ exports.getTopProducts = async (req, res, next) => {
 exports.getRecommendProducts = async (req, res, next) => {
     try {
         const session = driver.session({
-            database: 'tiki',
+            database: dbneo4j,
             defaultAccessMode: neo4j.session.WRITE,
         });
         const orderMongo = await Order.find({});

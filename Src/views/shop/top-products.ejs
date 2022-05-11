@@ -17,6 +17,9 @@
                             </h1>
                         </header>
                         
+						<div class="card__image">
+                            <img src="<%= product.imageUrl %>" alt="<%= product.title %>">
+                        </div>
                         <div class="card__content">
                             <p>Rating: <%= product.rating %></p>
                             <h2 class="product__price">$<%= product.price - product.discount %></h2>
