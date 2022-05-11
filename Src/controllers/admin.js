@@ -6,14 +6,21 @@ const driver = neo4j.driver('bolt://localhost:7687', neo4j.auth.basic('neo4j', '
 const dbneo4j = 'top-product';
 
 const postAllProductToN4J = async () => {
-    const productMongo = await Product.find({});
+	var search = {};
+	search = null;
+	
+    var productMongo = await Product.find(search);
+	productMongo = await productMongo.skip(null).limit(null);
+	
+	//console.log(productMongo);
+	
     productMongo.forEach(async (product) => {
         const session = driver.session({
             database: dbneo4j,
             defaultAccessMode: neo4j.session.WRITE,
         });
 		await session.run(
-			'MATCH(n:Brands) DELETE n'
+			'MATCH(n:Brands) DETACH DELETE n'
 		);
 		await session.run(
             'MERGE(c:Products {productID:$productID,userID:$userID,name:$titleParam, rating:$ratingParam, price:$priceParam, discount:$discountParam, description: $descriptionParam,brand:$brandParam}) MERGE(b:Brands {name:$brandParam}) MERGE (c)-[:PRODUCED_BY]->(b)',
@@ -96,6 +103,7 @@ exports.postAddProduct = async (req, res, next) => {
 
     try {
 		await product.save();
+		await postAllProductToN4J();
 		
 		if (false) {
 			let session = driver.session({

@@ -20,7 +20,7 @@ const postAllOrderToN4J = async () => {
                 defaultAccessMode: neo4j.session.WRITE,
             });
 		await session.run(
-			'MATCH(n:Products) DELETE n'
+			'MATCH(n:Products) DETACH DELETE n'
 		);
 		await session.run(
                 'MATCH(n:Products {productID:$productID}) MERGE (p:Person{userID:$userID,email:$emailParam})-[:BUY]->(n)',
