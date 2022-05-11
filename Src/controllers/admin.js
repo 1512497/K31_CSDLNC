@@ -23,11 +23,12 @@ const postAllProductToN4J = async () => {
 			'MATCH(n:Brands) DETACH DELETE n'
 		);
 		await session.run(
-            'MERGE(c:Products {productID:$productID,userID:$userID,name:$titleParam, rating:$ratingParam, price:$priceParam, discount:$discountParam, description: $descriptionParam,brand:$brandParam}) MERGE(b:Brands {name:$brandParam}) MERGE (c)-[:PRODUCED_BY]->(b)',
+            'MERGE(c:Products {productID:$productID,userID:$userID,name:$titleParam, title:$titleParam, imageUrl:$imageUrlParam, rating:$ratingParam, price:$priceParam, discount:$discountParam, description: $descriptionParam,brand:$brandParam}) MERGE(b:Brands {name:$brandParam}) MERGE (c)-[:PRODUCED_BY]->(b)',
             {
                 productID: String(product._id),
                 userID: String(product.userId),
                 titleParam: product.title,
+				imageUrlParam: product.imageUrl,
                 ratingParam: product.rating,
                 priceParam: product.price,
                 discountParam: product.discount,

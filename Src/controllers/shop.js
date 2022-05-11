@@ -86,6 +86,8 @@ exports.getTopProducts = async (req, res, next) => {
                         id: record._fields[0].identity.low,
                         productID: record._fields[0].properties.productID,
                         name: record._fields[0].properties.name,
+						title: record._fields[0].properties.name,
+						imageUrl: record._fields[0].properties.imageUrl,
                         rating: record._fields[0].properties.rating,
                         price: record._fields[0].properties.price,
                         discount: record._fields[0].properties.discount,
