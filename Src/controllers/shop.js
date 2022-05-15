@@ -9,7 +9,11 @@ const neo4j = require('neo4j-driver');
 const driver = neo4j.driver('bolt://localhost:7687', neo4j.auth.basic('neo4j', '1'));
 const dbneo4j = 'top-product';
 
+const redis = require('redis');
+const redisKeyPrefixCart = 'cart_';
+
 const ITEMS_PER_PAGE = 4;
+
 
 const postAllOrderToN4J = async () => {
     const orderMongo = await Order.find({});
@@ -327,6 +331,7 @@ exports.getSearch = async (req, res, next) => {
 
 exports.getCart = async (req, res, next) => {
     try {
+        PrepareRequestUser(req);
         const user = await req.user.populate('cart.items.productId').execPopulate(); // execPopulate so that it returns a promise
         res.render('shop/cart', {
             path: '/cart',
@@ -342,6 +347,7 @@ exports.getCart = async (req, res, next) => {
 
 exports.postCart = async (req, res, next) => {
     try {
+        PrepareRequestUser(req);
         const product = await Product.findById(req.body.productId);
         await req.user.addToCart(product);
         res.redirect('/cart');
@@ -354,6 +360,7 @@ exports.postCart = async (req, res, next) => {
 
 exports.postCartDeleteProduct = async (req, res, next) => {
     try {
+        PrepareRequestUser(req);
         await req.user.removeFromCart(req.body.productId);
         res.redirect('/cart');
     } catch (err) {
@@ -474,3 +481,73 @@ exports.getInvoice = async (req, res, next) => {
         return next(error);
     }
 };
+
+function PrepareRequestUser(req) {
+	var user = req.user;
+	if (!('user' in req)) {
+		user = {};
+		req.user = user;
+	}
+	
+	user.addToCart = userAddProductToCart;
+	user.populate = userGetProductPopulateObject;
+	user.removeFromCart = userRemoveProductFromCard;
+}
+
+function userGetProductPopulateObject(name) {
+	var instance = {}
+	instance._user = this;
+	
+	instance.execPopulate = async function() {
+		var key = redisKeyPrefixCart;
+		key += this._user._id;
+		key += '_';
+		key += '*';
+		
+		var client = redis.createClient();
+		client.on('error', (err) => console.log('Redis Client Error', err));
+		await client.connect();
+		
+		var items = [];
+		var keys = await client.keys(key);
+		var n = keys.length;
+		for (var i = 0; i < n; i++) {
+			key = keys[i];
+			var product = await client.get(key);
+			product = JSON.parse(product);
+			
+			var redisProduct = {};
+			redisProduct.productId = product;
+			redisProduct.quantity = 1;
+			
+			items.push(redisProduct);
+		}
+		
+		await client.quit();
+		
+		var result = {};
+		result.cart = {};
+		result.cart.items = items;
+		return result;
+	};
+	
+	return instance;
+}
+
+async function userAddProductToCart(product) {
+	var key = redisKeyPrefixCart;
+	key += product.userId;
+	key += '_';
+	key += product._id;
+
+	var client = redis.createClient();
+	client.on('error', (err) => console.log('Redis Client Error', err));
+	await client.connect();
+	await client.set(key, JSON.stringify(product));
+	await client.quit();
+}
+
+async function userRemoveProductFromCard(productId) {
+	console.log(productId);
+	
+}
