@@ -491,7 +491,21 @@ function PrepareRequestUser(req) {
 	
 	user.addToCart = userAddProductToCart;
 	user.populate = userGetProductPopulateObject;
-	user.removeFromCart = userRemoveProductFromCard;
+	user.removeFromCart = userRemoveProductFromCart;
+}
+
+async function fetchProductCartFromRedis(client, key) {
+	var result = null;
+	try	{
+		var s = await client.get(key);
+		if (s != null) {
+			result = JSON.parse(s);
+		}
+	}
+	catch (err) {
+		result = null;
+	}
+	return result;
 }
 
 function userGetProductPopulateObject(name) {
@@ -513,12 +527,14 @@ function userGetProductPopulateObject(name) {
 		var n = keys.length;
 		for (var i = 0; i < n; i++) {
 			key = keys[i];
-			var product = await client.get(key);
-			product = JSON.parse(product);
+			var cart = await fetchProductCartFromRedis(client, key);
+			if (null == cart) {
+				continue;
+			}
 			
 			var redisProduct = {};
-			redisProduct.productId = product;
-			redisProduct.quantity = 1;
+			redisProduct.productId = cart.product;
+			redisProduct.quantity = cart.quantity;
 			
 			items.push(redisProduct);
 		}
@@ -543,11 +559,28 @@ async function userAddProductToCart(product) {
 	var client = redis.createClient();
 	client.on('error', (err) => console.log('Redis Client Error', err));
 	await client.connect();
-	await client.set(key, JSON.stringify(product));
+	
+	var cart = await fetchProductCartFromRedis(client, key);
+	if (null == cart) {
+		cart = {}
+		cart.product = product;
+		cart.quantity = 0;
+	}
+	cart.quantity++;
+	
+	await client.set(key, JSON.stringify(cart));
 	await client.quit();
 }
 
-async function userRemoveProductFromCard(productId) {
-	console.log(productId);
+async function userRemoveProductFromCart(productId) {
+	var key = redisKeyPrefixCart;
+	key += this._id;
+	key += '_';
+	key += productId;
 	
+	var client = redis.createClient();
+	client.on('error', (err) => console.log('Redis Client Error', err));
+	await client.connect();
+	await client.del(key);
+	await client.quit();
 }
